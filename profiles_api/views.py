@@ -11,6 +11,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from django.views.decorators.csrf import csrf_exempt
 
 from profiles_api import serializers
 from profiles_api import models
@@ -20,16 +21,21 @@ import json
 
 
 
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated])
+#@authentication_classes([TokenAuthentication])
+#@permission_classes([IsAuthenticated])
 @api_view(['GET','POST'])
+@csrf_exempt
 def logoutuser(request):
     """Logout user"""
     if request.method == 'POST':
-        json_data = json.loads(request.body)
+        body_unicode = request.body.decode('utf-8')
+        json_data = json.loads(body_unicode)
         user = get_object_or_404(models.UserProfile, email=json_data['email'])
-        user.auth_token.delete()
-        return Response(status = status.HTTP_200_OK)
+        if user:
+            user.auth_token.delete()
+            return Response(status = status.HTTP_200_OK)
+        else:
+            return Response(status = status.HTTP_502_BAD_GATEWAY)
     return Response(status = status.HTTP_428_PRECONDITION_REQUIRED)
 
 
