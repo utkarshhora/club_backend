@@ -4,6 +4,7 @@ from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
 from django.conf import settings
 
+from django.contrib import admin
 
 # Create your models here.
 class UserProfileManager(BaseUserManager):
@@ -42,6 +43,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     is_activate = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_club = models.BooleanField(default=False)
 
     objects = UserProfileManager()
 
@@ -76,3 +78,26 @@ class ProfileFeedItem(models.Model):
     def __str__(self):
         """Return the model as a string """
         return self.status_text
+
+
+class Club(models.Model):
+    account = models.OneToOneField(UserProfile, related_name = 'clubAccount', on_delete=models.CASCADE)
+    guestList = models.ManyToManyField(UserProfile, related_name = 'guest', through='role')
+
+    def __str__(self):
+        return self.account.name
+
+class role(models.Model):
+    role_name = models.CharField(max_length=100)
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    club = models.ForeignKey(Club, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.role_name
+
+class role_inline(admin.TabularInline):
+    model = role
+    extra = 1
+
+class ClubAdmin(admin.ModelAdmin):
+    inlines = (role_inline,)

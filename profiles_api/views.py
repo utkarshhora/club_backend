@@ -158,3 +158,36 @@ class UserProfileFeedViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Sets the user progile to the logged in user"""
         serializer.save(user_profile = self.request.user)
+
+
+class ClubFeedViewSet(viewsets.ModelViewSet):
+    """Handles CRUD profile feed items"""
+    authentication_classes = (TokenAuthentication,)
+    serializer_class = serializers.ClubSerializer
+    queryset = models.Club.objects.all()
+    permission_classes = (permissions.UpdateOwnStatus, IsAuthenticated)
+    
+
+@csrf_exempt
+@api_view(['GET', 'POST'])
+def idToProfile(request):
+    """ Returns the Profile for a given id """
+    if request.method == 'POST':
+        body_unicode = request.body.decode('utf-8')
+        json_data = json.loads(body_unicode)
+        user = get_object_or_404(models.UserProfile, pk=json_data['id'])
+        serialized_user = serializers.UserProfileSerializer(user)
+
+        return Response(serialized_user.data)
+    return Response(status=status.HTTP_403_FORBIDDEN)
+
+@csrf_exempt
+@api_view(['GET', 'POST'])
+def isProfileClub(request):
+    """ Return whether if an account is a club or not """
+    if request.method == 'POST':
+        body_unicode = request.body.decode('utf-8')
+        json_data = json.loads(body_unicode)
+        user = get_object_or_404(models.UserProfile, email=json_data['email'])
+        return Response({"isClub": user.is_club})
+    return Response(status=status.HTTP_403_FORBIDDEN)
