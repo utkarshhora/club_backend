@@ -41,6 +41,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
     """
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
+    phoneNumber = models.CharField(max_length=20, default=0)
     is_activate = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_club = models.BooleanField(default=False)

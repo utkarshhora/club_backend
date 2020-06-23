@@ -12,9 +12,10 @@ router.register('club', views.ClubFeedViewSet)
 
 urlpatterns = [
     path('hello-view/', views.HelloApiView.as_view()),
-    path('login/', views.UserLoginApiView.as_view()),
+    path('login/', views.CustomObtainAuthToken.as_view()),
     path('logoutuser/', views.logoutuser),
     path('', include(router.urls) ),
     path('idToProfile/', views.idToProfile ),
-    path('isclub/', views.isProfileClub)
+    path('isclub/', views.isProfileClub),
+    path('tokenToId/', views.CustomObtainAuthToken.as_view()),
 ]

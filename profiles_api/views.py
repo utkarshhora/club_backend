@@ -9,6 +9,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import filters
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
+from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from django.views.decorators.csrf import csrf_exempt
@@ -166,19 +167,32 @@ class ClubFeedViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ClubSerializer
     queryset = models.Club.objects.all()
     permission_classes = (permissions.UpdateOwnStatus, IsAuthenticated)
-    
+
 
 @csrf_exempt
 @api_view(['GET', 'POST'])
+@authentication_classes([TokenAuthentication,])
+@permission_classes([permissions.UpdateOwnStatus, IsAuthenticated])
 def idToProfile(request):
     """ Returns the Profile for a given id """
     if request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
         json_data = json.loads(body_unicode)
-        user = get_object_or_404(models.UserProfile, pk=json_data['id'])
-        serialized_user = serializers.UserProfileSerializer(user)
+        users = []
+        user_data = {}
+        user_data_list = []
 
-        return Response(serialized_user.data)
+        for id in json_data['ids']:
+            users.append(get_object_or_404(models.UserProfile, pk=id))
+            user_data[id] = []
+        x = 0
+        for i in user_data:
+            dic = {"id": users[x].id,"name": users[x].name, "number": users[x].phoneNumber, "email": users[x].email}
+            user_data[i] = dic
+            user_data_list.append(dic)
+            x += 1
+
+        return Response(user_data_list)
     return Response(status=status.HTTP_403_FORBIDDEN)
 
 @csrf_exempt
@@ -191,3 +205,10 @@ def isProfileClub(request):
         user = get_object_or_404(models.UserProfile, email=json_data['email'])
         return Response({"isClub": user.is_club})
     return Response(status=status.HTTP_403_FORBIDDEN)
+
+
+class CustomObtainAuthToken(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        response = super(CustomObtainAuthToken, self).post(request, *args, **kwargs)
+        token = Token.objects.get(key=response.data['token'])
+        return Response({'token': token.key, 'id': token.user_id})
